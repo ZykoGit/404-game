@@ -2,8 +2,9 @@ export class Raycaster {
   constructor(map){
     this.map = map;
     this.fov = Math.PI / 3; // 60deg
-    this.numRays = 160; // vertical slices
+    this.numRays = 320; // increased horizontal resolution (tune for performance)
     this.maxDepth = 20;
+    this.step = 0.02; // smaller step for more accurate hits (costlier)
   }
 
   castAll(px, py, dir){
@@ -25,7 +26,7 @@ export class Raycaster {
     let hit = false;
     let hitX = 0, hitY = 0, tile = 0;
     while(!hit && distance < this.maxDepth){
-      distance += 0.05;
+      distance += this.step;
       const testX = px + cos * distance;
       const testY = py + sin * distance;
       const tx = Math.floor(testX);
@@ -45,7 +46,6 @@ export class Raycaster {
     const dy = cy - py;
     const angle = Math.atan2(dy, dx);
     const r = this.cast(px, py, angle);
-    // if distance to tile center is less than hit distance + small epsilon, visible
     const distToCenter = Math.hypot(dx, dy);
     return distToCenter < r.distance + 0.1;
   }
