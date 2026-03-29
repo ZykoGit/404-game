@@ -8,10 +8,18 @@ export class Renderer {
   }
 
   resize(){
-    const dpr = Math.max(1, window.devicePixelRatio || 1);
+    // cap DPR to balance sharpness and performance
+    const rawDpr = window.devicePixelRatio || 1;
+    const dpr = Math.min(2, Math.max(1, rawDpr)); // 1..2 recommended
+    // set backing buffer size
     this.canvas.width = Math.floor(window.innerWidth * dpr);
     this.canvas.height = Math.floor(window.innerHeight * dpr);
-    this.ctx.imageSmoothingEnabled = false;
+    // keep CSS size at viewport so layout doesn't change
+    this.canvas.style.width = window.innerWidth + 'px';
+    this.canvas.style.height = window.innerHeight + 'px';
+    // smoothing for subpixel drawing
+    this.ctx.imageSmoothingEnabled = true;
+    this.ctx.imageSmoothingQuality = 'high';
   }
 
   clear(){
@@ -27,7 +35,8 @@ export class Renderer {
 
     // sky / floor
     const skyGrad = this.ctx.createLinearGradient(0,0,0,h/2);
-    skyGrad.addColorStop(0, `rgba(${20+corruption},${20},${30},1)`);
+    const skyR = Math.min(255, 20 + Math.floor(corruption * 0.6));
+    skyGrad.addColorStop(0, `rgba(${skyR},${20},${30},1)`);
     skyGrad.addColorStop(1, '#000');
     this.ctx.fillStyle = skyGrad;
     this.ctx.fillRect(0,0,w,h/2);
@@ -35,32 +44,39 @@ export class Renderer {
     this.ctx.fillStyle = '#111';
     this.ctx.fillRect(0,h/2,w,h/2);
 
-    // vertical slices
+    // vertical slices (use fractional positions to allow smoothing)
     for(let i=0;i<rays.length;i++){
       const r = rays[i];
-      // simple fish-eye correction
+      // fish-eye correction
       const corrected = r.distance * Math.cos(r.angle - playerDir);
       const wallHeight = Math.min(h, (1 / Math.max(0.0001, corrected)) * (h/1.5));
-      const x = Math.floor(i * sliceW);
-      const y = Math.floor((h - wallHeight) / 2);
+      const x = i * sliceW;
+      const y = (h - wallHeight) / 2;
 
       // shade by distance and tile type
       const shade = Math.max(0, 255 - Math.floor(r.distance * 20) - corruption);
-      const color = r.tile === 1 ? `rgb(${shade},${shade/1.2},${shade/1.5})` : `rgb(${shade/1.5},${shade},${shade/1.2})`;
+      const rCol = Math.floor(shade);
+      const gCol = Math.floor(r.tile === 1 ? shade / 1.2 : shade);
+      const bCol = Math.floor(r.tile === 1 ? shade / 1.5 : shade / 1.2);
+      const color = `rgb(${rCol},${gCol},${bCol})`;
 
       this.ctx.fillStyle = color;
-      this.ctx.fillRect(x, y, Math.ceil(sliceW)+1, Math.ceil(wallHeight));
+      this.ctx.fillRect(x, y, sliceW + 1, wallHeight);
 
-      // simple static overlay on walls
+      // subtle procedural static overlay on walls
       if (Math.random() < 0.02 + corruption/500) {
         this.ctx.fillStyle = `rgba(255,255,255,${0.02 + corruption/500})`;
-        this.ctx.fillRect(x, y, Math.ceil(sliceW)+1, Math.ceil(wallHeight));
+        this.ctx.fillRect(x, y, sliceW + 1, wallHeight);
       }
     }
 
-    // optional HUD crosshair
+    // HUD crosshair (scaled to backing buffer)
     this.ctx.fillStyle = 'rgba(255,255,255,0.08)';
-    this.ctx.fillRect(w/2 - 1, h/2 - 8, 2, 16);
-    this.ctx.fillRect(w/2 - 8, h/2 - 1, 16, 2);
+    const cx = w / 2;
+    const cy = h / 2;
+    const ch = Math.max(8, Math.floor(h * 0.01));
+    const cw = Math.max(8, Math.floor(w * 0.01));
+    this.ctx.fillRect(cx - 1, cy - ch, 2, ch * 2);
+    this.ctx.fillRect(cx - cw, cy - 1, cw * 2, 2);
   }
 }
