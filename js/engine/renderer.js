@@ -1,23 +1,22 @@
+import { TextureAtlas } from '../procedural/textures.js';
+
 export class Renderer {
   constructor(canvas, map){
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
     this.map = map;
+    TextureAtlas.init();
     this.resize();
     window.addEventListener('resize', () => this.resize());
   }
 
   resize(){
-    // cap DPR to balance sharpness and performance
     const rawDpr = window.devicePixelRatio || 1;
-    const dpr = Math.min(2, Math.max(1, rawDpr)); // 1..2 recommended
-    // set backing buffer size
+    const dpr = Math.min(2, Math.max(1, rawDpr));
     this.canvas.width = Math.floor(window.innerWidth * dpr);
     this.canvas.height = Math.floor(window.innerHeight * dpr);
-    // keep CSS size at viewport so layout doesn't change
     this.canvas.style.width = window.innerWidth + 'px';
     this.canvas.style.height = window.innerHeight + 'px';
-    // smoothing for subpixel drawing
     this.ctx.imageSmoothingEnabled = true;
     this.ctx.imageSmoothingQuality = 'high';
   }
@@ -44,33 +43,43 @@ export class Renderer {
     this.ctx.fillStyle = '#111';
     this.ctx.fillRect(0,h/2,w,h/2);
 
-    // vertical slices (use fractional positions to allow smoothing)
+    // draw vertical slices with texture sampling
     for(let i=0;i<rays.length;i++){
       const r = rays[i];
-      // fish-eye correction
       const corrected = r.distance * Math.cos(r.angle - playerDir);
       const wallHeight = Math.min(h, (1 / Math.max(0.0001, corrected)) * (h/1.5));
       const x = i * sliceW;
       const y = (h - wallHeight) / 2;
 
-      // shade by distance and tile type
-      const shade = Math.max(0, 255 - Math.floor(r.distance * 20) - corruption);
-      const rCol = Math.floor(shade);
-      const gCol = Math.floor(r.tile === 1 ? shade / 1.2 : shade);
-      const bCol = Math.floor(r.tile === 1 ? shade / 1.5 : shade / 1.2);
-      const color = `rgb(${rCol},${gCol},${bCol})`;
+      // determine texture name from tile value via map textures mapping
+      const tileVal = r.tile || 0;
+      const texName = (this.map.textures && this.map.textures[tileVal]) ? this.map.textures[tileVal] : 'static';
+      const texCanvas = TextureAtlas.get(texName);
+      const texW = texCanvas.width;
+      const texH = texCanvas.height;
 
-      this.ctx.fillStyle = color;
-      this.ctx.fillRect(x, y, sliceW + 1, wallHeight);
+      // compute source x in texture using texU from ray (0..1)
+      const srcX = Math.floor(r.texU * texW);
 
-      // subtle procedural static overlay on walls
-      if (Math.random() < 0.02 + corruption/500) {
-        this.ctx.fillStyle = `rgba(255,255,255,${0.02 + corruption/500})`;
+      // draw a 1px wide column from texture scaled to slice
+      // use drawImage(source, sx, sy, sw, sh, dx, dy, dw, dh)
+      try {
+        this.ctx.drawImage(texCanvas, srcX, 0, 1, texH, x, y, sliceW + 1, wallHeight);
+      } catch (e) {
+        // fallback: fill with shaded color if drawImage fails
+        const shade = Math.max(0, 255 - Math.floor(r.distance * 20) - corruption);
+        this.ctx.fillStyle = `rgb(${shade},${shade/1.2},${shade/1.5})`;
+        this.ctx.fillRect(x, y, sliceW + 1, wallHeight);
+      }
+
+      // subtle static overlay controlled by corruption
+      if (Math.random() < 0.01 + corruption/800) {
+        this.ctx.fillStyle = `rgba(255,255,255,${0.01 + corruption/800})`;
         this.ctx.fillRect(x, y, sliceW + 1, wallHeight);
       }
     }
 
-    // HUD crosshair (scaled to backing buffer)
+    // HUD crosshair
     this.ctx.fillStyle = 'rgba(255,255,255,0.08)';
     const cx = w / 2;
     const cy = h / 2;
