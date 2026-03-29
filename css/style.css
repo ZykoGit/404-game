@@ -3,19 +3,23 @@
   --ui:#e6e6e6;
 }
 html,body{height:100%;margin:0;background:var(--bg);color:var(--ui);font-family:monospace}
-#gameCanvas{display:block;width:100vw;height:100vh;background:#000;image-rendering:pixelated}
+#gameCanvas{display:block;width:100vw;height:100vh;background:#000;image-rendering:auto}
 #ui{position:fixed;left:12px;top:12px;z-index:20;pointer-events:none}
 #title{font-size:18px;margin-bottom:8px}
 #hud{font-size:13px}
 #overlay{position:fixed;inset:0;z-index:30;pointer-events:none;mix-blend-mode:screen}
 .hidden{display:none}
 
-/* subtle scanlines */
-#gameCanvas::after{
-  content:"";
-  position:fixed;left:0;top:0;right:0;bottom:0;
+/* subtle scanlines as an overlay element is preferred to pseudo-element pixelation */
+.scanlines {
+  position:fixed;
+  left:0;
+  top:0;
+  right:0;
+  bottom:0;
   pointer-events:none;
   background-image:linear-gradient(rgba(255,255,255,0.02) 50%, transparent 50%);
   background-size:100% 4px;
   opacity:0.08;
+  z-index:25;
 }
