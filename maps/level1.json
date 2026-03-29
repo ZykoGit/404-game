@@ -1,6 +1,6 @@
 {
-  "tileSize":1,
-  "layout":[
+  "tileSize": 1,
+  "layout": [
     [1,1,1,1,1,1],
     [1,0,0,0,2,1],
     [1,0,1,0,0,1],
@@ -8,10 +8,16 @@
     [1,3,0,0,0,1],
     [1,1,1,1,1,1]
   ],
-  "spawn":[1.5,4.5],
-  "exit":[4.5,1.5],
-  "triggers":[
+  "spawn": [1.5,4.5],
+  "exit": [4.5,1.5],
+  "triggers": [
     {"id":"j1","x":4,"y":1,"type":"jumpscare"},
     {"id":"w1","x":1,"y":4,"type":"whisper"}
-  ]
+  ],
+  "textures": {
+    "1": "concrete",
+    "2": "exit",
+    "3": "brick",
+    "0": "floor"
+  }
 }
