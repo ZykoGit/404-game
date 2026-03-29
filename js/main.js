@@ -9,7 +9,7 @@ import { EventManager } from './game/events.js';
 const canvas = document.getElementById('gameCanvas');
 
 async function boot(){
-  const map = await MapLoader.load('/maps/level1.json');
+  const map = await MapLoader.load('./maps/level1.json');
   const renderer = new Renderer(canvas, map);
   const raycaster = new Raycaster(map);
   const input = new Input(canvas);
