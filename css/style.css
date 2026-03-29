@@ -1,23 +1,21 @@
-/* css/style.css */
-:root {
-  --bg: #000;
-  --ui: #e6e6e6;
-  --scanline: rgba(255,255,255,0.02);
+:root{
+  --bg:#000;
+  --ui:#e6e6e6;
 }
-html,body { height:100%; margin:0; background:var(--bg); color:var(--ui); font-family:monospace; }
-#gameCanvas { display:block; width:100vw; height:100vh; background:#000; image-rendering:pixelated; }
-#ui { position:fixed; left:12px; top:12px; z-index:20; pointer-events:none; }
-#title { font-size:18px; margin-bottom:8px; }
-#hud { font-size:13px; }
-#overlay { position:fixed; inset:0; z-index:30; pointer-events:none; mix-blend-mode:screen; }
-.hidden { display:none; }
+html,body{height:100%;margin:0;background:var(--bg);color:var(--ui);font-family:monospace}
+#gameCanvas{display:block;width:100vw;height:100vh;background:#000;image-rendering:pixelated}
+#ui{position:fixed;left:12px;top:12px;z-index:20;pointer-events:none}
+#title{font-size:18px;margin-bottom:8px}
+#hud{font-size:13px}
+#overlay{position:fixed;inset:0;z-index:30;pointer-events:none;mix-blend-mode:screen}
+.hidden{display:none}
 
-/* effects.css */
-.scanlines {
-  background-image: linear-gradient(rgba(0,0,0,0.05) 50%, transparent 50%);
-  background-size: 100% 4px;
-  opacity:0.25;
-}
-.chromatic {
-  filter: url('#chromatic-aberration'); /* optional SVG filter if you add one */
+/* subtle scanlines */
+#gameCanvas::after{
+  content:"";
+  position:fixed;left:0;top:0;right:0;bottom:0;
+  pointer-events:none;
+  background-image:linear-gradient(rgba(255,255,255,0.02) 50%, transparent 50%);
+  background-size:100% 4px;
+  opacity:0.08;
 }
